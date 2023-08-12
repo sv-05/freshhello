@@ -50,7 +50,11 @@ def checkNewFiles_def(path):
             logger.info(f"checkNewFiles_def() : Creating batch of new files to process")
             if dfFiles_p['modificationTime'][i] > (spark.sql("select max(modificationTime) from watermark_tbl").collect())[0][0]:
                 newBatch.add(dfFiles_p['path'][i])           # Collect all new arrived file paths
+            else:
+                logger.info(f"checkNewFiles_def() : No new files arrived - {datetime.now()}")
+                
         return newBatch
+    
     except Exception as e:
         logger.error(f"checkNewFiles_def() : {e}")
 
@@ -58,14 +62,3 @@ def checkNewFiles_def(path):
 
 path = "/FileStore/tables/hellofresh"
 checkNewFiles_def(path)
-
-# COMMAND ----------
-
-# display(spark.sql('SELECT MAX(modificationTime) FROM watermark_tbl'))
-newBatcha = set()
-dfFiles_p = pd.DataFrame(dbutils.fs.ls("/FileStore/tables/hellofresh"))
-dfFiles_p['modificationTime'] = dfFiles_p['modificationTime'].apply(lambda x : datetime.fromtimestamp(int(str(x).replace('000', ''))))
-for i in dfFiles_p.index:
-    if dfFiles_p['modificationTime'][i] == (spark.sql("select max(modificationTime) from watermark_tbl").collect())[0][0]:
-        newBatcha.add(dfFiles_p['path'][i])
-        print(newBatcha)
